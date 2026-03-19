@@ -145,6 +145,66 @@ transporter.verify((error) => {
     else console.log('✅ Email server ready');
 });
 
+// Helper for Modern Email Template
+const getEmailTemplate = (title, preheader, message, otp) => `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; }
+        .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .header { background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%); padding: 40px 20px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: 1px; }
+        .header img { max-width: 100%; height: auto; max-height: 200px; object-fit: cover; margin-top: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .content { padding: 40px 30px; color: #333333; text-align: center; }
+        .content h2 { color: #1a1a1a; font-size: 24px; margin-bottom: 16px; font-weight: 600; }
+        .content p { font-size: 16px; line-height: 1.6; color: #555555; margin-bottom: 24px; }
+        .otp-box { background-color: #f0f7ff; border: 2px dashed #0072FF; border-radius: 12px; padding: 20px; margin: 30px 0; }
+        .otp-code { font-size: 42px; font-weight: 800; color: #0072FF; letter-spacing: 8px; margin: 0; }
+        .otp-expiry { font-size: 13px; color: #666666; margin-top: 12px; }
+        .footer { background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #eeeeee; }
+        .footer p { font-size: 12px; color: #999999; margin: 5px 0; }
+        .social-icons { margin-top: 16px; }
+        .social-icons span { display: inline-block; width: 32px; height: 32px; background-color: #e0e0e0; border-radius: 50%; margin: 0 4px; line-height: 32px; color: white; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div style="display: none; max-height: 0px; overflow: hidden;">
+        ${preheader}
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>NOMADY</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Explore The World Together</p>
+            <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=600&auto=format&fit=crop" alt="Travel Header">
+        </div>
+        <div class="content">
+            <h2>${title}</h2>
+            <p>${message}</p>
+            
+            <div class="otp-box">
+                <p class="otp-code">${otp}</p>
+                <p class="otp-expiry">⏳ This code will expire in exactly <strong>60 seconds</strong>.</p>
+            </div>
+            
+            <p style="font-size: 14px; color: #777;">If you did not request this code, please ignore this email or contact our support team immediately.</p>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Nomady Travel App. All rights reserved.</p>
+            <p>123 Explorer Street, Adventure City, Earth</p>
+            <div class="social-icons">
+                <span style="background-color: #1877f2;">f</span>
+                <span style="background-color: #1da1f2;">t</span>
+                <span style="background-color: #e1306c;">ig</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
 // ---------------------------------------------------------
 // AUTH ROUTES
 // ---------------------------------------------------------
@@ -167,10 +227,15 @@ app.post('/api/auth/register', async (req, res) => {
 
         try {
             await transporter.sendMail({
-                from: '"Travel App" <noreply@travelapp.com>',
+                from: '"Nomady Travel" <watggwp@gmail.com>',
                 to: email,
-                subject: 'Verify Your Email - Travel App',
-                html: `<h2>Welcome to Travel App!</h2><p>Your OTP is: <strong>${otpCode}</strong></p><p>It will expire in 60 seconds.</p>`
+                subject: 'Verify Your Email - Nomady Travel',
+                html: getEmailTemplate(
+                    'Welcome to Nomady! ✈️',
+                    'Your verification code is here.',
+                    'We are thrilled to have you on board! To complete your registration and start exploring the world with us, please use the verification code below.',
+                    otpCode
+                )
             });
         } catch (err) { console.error('Email error:', err.message); }
 
@@ -263,10 +328,15 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
         try {
             await transporter.sendMail({
-                from: '"Travel App" <noreply@travelapp.com>',
+                from: '"Nomady Travel" <watggwp@gmail.com>',
                 to: email,
-                subject: 'Reset Password - Travel App',
-                html: `<h2>Password Reset Request</h2><p>Your reset OTP is: <strong>${resetOtp}</strong></p><p>It will expire in 60 seconds.</p>`
+                subject: 'Reset Password - Nomady Travel',
+                html: getEmailTemplate(
+                    'Password Reset Request 🔒',
+                    'Your secure password reset code.',
+                    'We received a request to reset the password associated with your account. Please use the secure OTP code below to proceed with resetting your password.',
+                    resetOtp
+                )
             });
         } catch (err) { console.error('Email error:', err.message); }
 
