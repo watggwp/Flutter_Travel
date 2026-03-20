@@ -65,6 +65,15 @@ db.serialize(() => {
         FOREIGN KEY(userId) REFERENCES users(id)
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS bookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        postId INTEGER NOT NULL,
+        userId INTEGER NOT NULL,
+        UNIQUE(postId, userId),
+        FOREIGN KEY(postId) REFERENCES posts(id),
+        FOREIGN KEY(userId) REFERENCES users(id)
+    )`);
+
     db.run(`CREATE TABLE IF NOT EXISTS likes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         postId INTEGER NOT NULL,
@@ -484,14 +493,15 @@ app.get('/api/posts/feed', authMiddleware, async (req, res) => {
                 u.id as userId, u.fullName, u.profilePicture,
                 (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likeCount,
                 (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentCount,
-                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe
+                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe,
+                (SELECT COUNT(*) FROM bookmarks WHERE postId = p.id AND userId = ?) as bookmarkedByMe
             FROM posts p
             JOIN users u ON p.userId = u.id
             ORDER BY p.createdAt DESC
             LIMIT ? OFFSET ?
-        `, [myId, limit, offset]);
+        `, [myId, myId, limit, offset]);
 
-        res.status(200).json({ posts: posts.map(p => ({ ...p, likedByMe: p.likedByMe > 0 })) });
+        res.status(200).json({ posts: posts.map(p => ({ ...p, likedByMe: p.likedByMe > 0, bookmarkedByMe: p.bookmarkedByMe > 0 })) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error' });
@@ -511,15 +521,16 @@ app.get('/api/posts/:id', authMiddleware, async (req, res) => {
                 u.id as userId, u.fullName, u.profilePicture,
                 (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likeCount,
                 (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentCount,
-                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe
+                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe,
+                (SELECT COUNT(*) FROM bookmarks WHERE postId = p.id AND userId = ?) as bookmarkedByMe
             FROM posts p
             JOIN users u ON p.userId = u.id
             WHERE p.id = ?
-        `, [myId, postId]);
+        `, [myId, myId, postId]);
 
         if (posts.length === 0) return res.status(404).json({ message: 'Post not found' });
 
-        const post = { ...posts[0], likedByMe: posts[0].likedByMe > 0 };
+        const post = { ...posts[0], likedByMe: posts[0].likedByMe > 0, bookmarkedByMe: posts[0].bookmarkedByMe > 0 };
         res.status(200).json({ post });
     } catch (error) {
         console.error(error);
@@ -540,14 +551,15 @@ app.get('/api/users/:userId/posts', authMiddleware, async (req, res) => {
                 u.id as userId, u.fullName, u.profilePicture,
                 (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likeCount,
                 (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentCount,
-                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe
+                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe,
+                (SELECT COUNT(*) FROM bookmarks WHERE postId = p.id AND userId = ?) as bookmarkedByMe
             FROM posts p
             JOIN users u ON p.userId = u.id
             WHERE p.userId = ?
             ORDER BY p.createdAt DESC
-        `, [myId, userId]);
+        `, [myId, myId, userId]);
 
-        res.status(200).json({ posts: posts.map(p => ({ ...p, likedByMe: p.likedByMe > 0 })) });
+        res.status(200).json({ posts: posts.map(p => ({ ...p, likedByMe: p.likedByMe > 0, bookmarkedByMe: p.bookmarkedByMe > 0 })) });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
@@ -575,6 +587,52 @@ app.post('/api/posts/:id/like', authMiddleware, async (req, res) => {
             }
             res.status(200).json({ liked: true });
         }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Toggle bookmark
+app.post('/api/posts/:id/bookmark', authMiddleware, async (req, res) => {
+    try {
+        const postId = req.params.id;
+        const userId = req.user.id;
+
+        const existing = await dbQuery('SELECT id FROM bookmarks WHERE postId = ? AND userId = ?', [postId, userId]);
+        if (existing.length > 0) {
+            await dbRun('DELETE FROM bookmarks WHERE postId = ? AND userId = ?', [postId, userId]);
+            res.status(200).json({ bookmarked: false });
+        } else {
+            await dbRun('INSERT INTO bookmarks (postId, userId) VALUES (?, ?)', [postId, userId]);
+            res.status(200).json({ bookmarked: true });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get user bookmarks
+app.get('/api/bookmarks', authMiddleware, async (req, res) => {
+    try {
+        const myId = req.user.id;
+
+        const posts = await dbQuery(`
+            SELECT 
+                p.id, p.caption, p.locationName, p.lat, p.lng, p.tags, p.createdAt,
+                p.imageBase64,
+                u.id as userId, u.fullName, u.profilePicture,
+                (SELECT COUNT(*) FROM likes WHERE postId = p.id) as likeCount,
+                (SELECT COUNT(*) FROM comments WHERE postId = p.id) as commentCount,
+                (SELECT COUNT(*) FROM likes WHERE postId = p.id AND userId = ?) as likedByMe,
+                1 as bookmarkedByMe
+            FROM bookmarks b
+            JOIN posts p ON b.postId = p.id
+            JOIN users u ON p.userId = u.id
+            WHERE b.userId = ?
+            ORDER BY b.id DESC
+        `, [myId, myId]);
+
+        res.status(200).json({ posts: posts.map(p => ({ ...p, likedByMe: p.likedByMe > 0, bookmarkedByMe: true })) });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }

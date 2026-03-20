@@ -74,6 +74,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  Future<void> _toggleBookmark(int index) async {
+    final post = _posts[index];
+    final nowBookmarked = await _postService.toggleBookmark(post['id'] as int);
+    if (mounted) {
+      setState(() {
+        _posts[index]['bookmarkedByMe'] = nowBookmarked;
+      });
+    }
+  }
+
   void _openComments(Map<String, dynamic> post) {
     showModalBottomSheet(
       context: context,
@@ -189,6 +199,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           post: _posts[index],
           onLike: () => _toggleLike(index),
           onComment: () => _openComments(_posts[index]),
+          onBookmark: () => _toggleBookmark(index),
           onUserTap: (userId, userName) {
             Navigator.push(
               context,
@@ -211,12 +222,14 @@ class _PostCard extends StatelessWidget {
   final Map<String, dynamic> post;
   final VoidCallback onLike;
   final VoidCallback onComment;
+  final VoidCallback onBookmark;
   final void Function(int userId, String userName) onUserTap;
 
   const _PostCard({
     required this.post,
     required this.onLike,
     required this.onComment,
+    required this.onBookmark,
     required this.onUserTap,
   });
 
@@ -257,6 +270,7 @@ class _PostCard extends StatelessWidget {
     } catch (_) {}
 
     final bool liked = post['likedByMe'] == true;
+    final bool bookmarked = post['bookmarkedByMe'] == true;
     final int likeCount = post['likeCount'] as int? ?? 0;
     final int commentCount = post['commentCount'] as int? ?? 0;
     final String timeStr = _formatTime(post['createdAt'] as int? ?? 0);
@@ -373,8 +387,16 @@ class _PostCard extends StatelessWidget {
                   onTap: onComment,
                 ),
                 const Spacer(),
-                const Icon(Icons.share_outlined,
-                    color: AppColors.textSecondary, size: 22),
+                GestureDetector(
+                  onTap: onBookmark,
+                  child: Icon(
+                    bookmarked
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
+                    color: bookmarked ? AppColors.primary : AppColors.textSecondary,
+                    size: 24,
+                  ),
+                ),
               ],
             ),
           ),

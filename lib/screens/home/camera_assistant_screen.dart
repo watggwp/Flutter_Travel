@@ -184,7 +184,7 @@ class _CameraAssistantScreenState extends State<CameraAssistantScreen> {
                                 const Icon(Icons.auto_awesome, color: AppColors.primary, size: 16),
                                 const SizedBox(width: 6),
                                 Text(
-                                  _isLoading ? AppTranslations.get('ai_analyzing') : 'AI Suggestion',
+                                  _isLoading ? AppTranslations.get('ai_analyzing') : AppTranslations.get('ai_suggestion'),
                                   style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
                                 ),
                               ],

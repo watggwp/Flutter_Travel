@@ -177,6 +177,43 @@ class PostService {
     }
   }
 
+  // Toggle bookmark — returns true if now bookmarked
+  Future<bool> toggleBookmark(int postId) async {
+    final token = await _getToken();
+    if (token == null) return false;
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/posts/$postId/bookmark'),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['bookmarked'] as bool;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Get bookmarked posts
+  Future<List<dynamic>> getBookmarks() async {
+    final token = await _getToken();
+    if (token == null) return [];
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/bookmarks'),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['posts'] as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+
   // Get user public profile
   Future<Map<String, dynamic>?> getUserProfile(int userId) async {
     final token = await _getToken();

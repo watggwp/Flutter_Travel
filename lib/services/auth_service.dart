@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // Use localhost for Web, and 10.0.2.2 for Android Emulator
-  static const String baseUrl = kIsWeb ? 'http://localhost:3000/api/auth' : 'http://10.0.2.2:3000/api/auth';
+  static const String baseUrl = kIsWeb
+      ? 'http://localhost:3000/api/auth'
+      : 'http://10.0.2.2:3000/api/auth';
 
   Future<bool> login(String email, String password) async {
     try {
@@ -28,7 +30,12 @@ class AuthService {
     }
   }
 
-  Future<bool> register(String name, String email, String phone, String password) async {
+  Future<bool> register(
+    String name,
+    String email,
+    String phone,
+    String password,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
@@ -89,12 +96,20 @@ class AuthService {
     }
   }
 
-  Future<bool> resetPassword(String email, String otp, String newPassword) async {
+  Future<bool> resetPassword(
+    String email,
+    String otp,
+    String newPassword,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/reset-password'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'otp': otp, 'newPassword': newPassword}),
+        body: jsonEncode({
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        }),
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -123,10 +138,15 @@ class AuthService {
     }
   }
 
-  Future<Map<String, dynamic>> updateProfile(String fullName, String phone, String bio, String? profilePictureBase64) async {
+  Future<Map<String, dynamic>> updateProfile(
+    String fullName,
+    String phone,
+    String bio,
+    String? profilePictureBase64,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    
+
     if (token == null) return {'success': false, 'message': 'Not logged in'};
 
     try {
@@ -144,7 +164,12 @@ class AuthService {
         }),
       );
 
-      return {'success': response.statusCode == 200, 'message': response.statusCode == 200 ? 'Profile updated!' : 'Failed to update profile: ${response.statusCode}'};
+      return {
+        'success': response.statusCode == 200,
+        'message': response.statusCode == 200
+            ? 'Profile updated!'
+            : 'Failed to update profile: ${response.statusCode}',
+      };
     } catch (e) {
       return {'success': false, 'message': 'Net Error: $e'};
     }

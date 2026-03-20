@@ -16,6 +16,7 @@ import 'package:image_picker/image_picker.dart';
 import 'home/camera_assistant_screen.dart';
 import '../services/notification_service.dart';
 import 'notification/notification_screen.dart';
+import 'home/favorites_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -127,9 +128,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'What would you like to do?',
-            style: TextStyle(
+          Text(
+            AppTranslations.get('cam_menu_title'),
+            style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary),
@@ -145,9 +146,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               child: const Icon(Icons.add_photo_alternate_rounded,
                   color: Colors.white),
             ),
-            title: const Text('Post a Photo',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: const Text('Share a moment with location & tags'),
+            title: Text(AppTranslations.get('cam_post_title'),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(AppTranslations.get('cam_post_sub')),
             trailing: const Icon(Icons.chevron_right_rounded,
                 color: AppColors.textSecondary),
             onTap: () async {
@@ -177,9 +178,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               child: const Icon(Icons.auto_awesome_rounded,
                   color: AppColors.secondary),
             ),
-            title: const Text('AI Identify Place',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: const Text('Take a photo and let AI explain it'),
+            title: Text(AppTranslations.get('cam_ai_title'),
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(AppTranslations.get('cam_ai_sub')),
             trailing: const Icon(Icons.chevron_right_rounded,
                 color: AppColors.textSecondary),
             onTap: () async {
@@ -513,13 +514,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           _drawerItem(Icons.favorite_border_rounded,
               AppTranslations.get('drawer_fav'), () {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppTranslations.get('coming_soon')),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
             );
           }),
           _drawerItem(Icons.settings_outlined,

@@ -13,9 +13,9 @@ class NotificationService {
   }
 
   Map<String, String> _headers(String token) => {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      };
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
 
   Future<List<dynamic>> getNotifications() async {
     final token = await _getToken();
